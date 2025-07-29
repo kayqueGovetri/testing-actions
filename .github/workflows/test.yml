@@ -1,0 +1,31 @@
+name: Test MySQL on Windows
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: Get-Service | Where-Object {$_.DisplayName -like "*Postgre*"}
+        shell: powershell
+
+      - name: Start PostgreSQL service
+        run: |
+          net start postgresql-x64-15
+        shell: cmd
+
+      - name: Wait a few seconds for PostgreSQL to start
+        run: |
+          Start-Sleep -Seconds 5
+        shell: powershell
+
+      - name: Test connection to PostgreSQL
+        run: |
+          psql -U postgres -c "SELECT version();"
+        env:
+          PGPASSWORD: 'P@ssw0rd!'
+        shell: bash
