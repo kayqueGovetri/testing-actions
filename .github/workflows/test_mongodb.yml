@@ -17,13 +17,21 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Testar mongosh com caminho encontrado
+      - name: Verificar caminho do mongosh.exe
         shell: pwsh
         run: |
-          $mongoshPath = (cmd /c where mongosh.exe | Out-String).Trim().Split("`n")[0]
+          $mongoshPath = (Get-Command mongosh.exe -ErrorAction SilentlyContinue).Source
           if (-not $mongoshPath) {
-            Write-Error "mongosh.exe não encontrado no PATH"
-            exit 1
+            # Tente caminho fixo conhecido para mongosh do runner:
+            $possiblePath = "C:\Program Files\MongoDB\mongosh\2.5.6\bin\mongosh.exe"
+            if (Test-Path $possiblePath) {
+              $mongoshPath = $possiblePath
+            } else {
+              Write-Error "mongosh.exe não encontrado."
+              exit 1
+            }
           }
-          Write-Host "mongosh.exe encontrado em: $mongoshPath"
+          Write-Host "mongosh encontrado em: $mongoshPath"
+      
+          # Testa conexão ping
           & $mongoshPath --eval "db.runCommand({ ping: 1 })"
