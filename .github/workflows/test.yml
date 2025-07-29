@@ -11,17 +11,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start PostgreSQL service dynamically
+      - name: Start PostgreSQL service dynamically (net start)
         run: |
           $pgService = Get-Service | Where-Object { $_.Name -like "postgresql-x64-*" -and $_.Status -eq "Stopped" } | Select-Object -First 1
           if ($pgService) {
-            Start-Service -Name $pgService.Name
-            Write-Output "Started PostgreSQL service: $($pgService.Name)"
+            $serviceName = $pgService.Name
+            Write-Host "Trying to start: $serviceName"
+            cmd /c "net start $serviceName"
           } else {
             Write-Error "No stopped PostgreSQL service found."
             exit 1
           }
         shell: powershell
+
 
       - name: Wait for PostgreSQL
         run: Start-Sleep -Seconds 5
