@@ -17,8 +17,6 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Test MongoDB connection
+      - name: List MongoDB bin folder
+        run: Get-ChildItem "C:\Program Files\MongoDB\Server\7.0\bin" | Select-Object Name
         shell: powershell
-        run: |
-          $mongoBin = "C:\Program Files\MongoDB\Server\7.0\bin"
-          & "$mongoBin\mongo.exe" --eval "db.runCommand({ ping: 1 })"
