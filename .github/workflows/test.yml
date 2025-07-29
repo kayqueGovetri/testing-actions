@@ -1,36 +1,33 @@
-name: Test PostgreSQL on Windows
+name: Run PostgreSQL manually on Windows
 
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  test-windows:
+  test-postgres:
     runs-on: windows-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Start PostgreSQL service dynamically (net start)
+      - name: Set up PostgreSQL manually
         run: |
-          $pgService = Get-Service | Where-Object { $_.Name -like "postgresql-x64-*" -and $_.Status -eq "Stopped" } | Select-Object -First 1
-          if ($pgService) {
-            $serviceName = $pgService.Name
-            Write-Host "Trying to start: $serviceName"
-            cmd /c "net start $serviceName"
-          } else {
-            Write-Error "No stopped PostgreSQL service found."
-            exit 1
-          }
+          $pgsql = "C:\Program Files\PostgreSQL\14\bin"
+          $data = "$env:RUNNER_TEMP\pgdata"
+
+          # Initialize database cluster
+          & "$pgsql\initdb.exe" -D "$data" -U postgres --no-locale --encoding=UTF8 --pwfile=<(echo P@ssw0rd!)
+
+          # Start PostgreSQL in background
+          Start-Process -FilePath "$pgsql\pg_ctl.exe" -ArgumentList "start -D `"$data`" -l logfile" -NoNewWindow -PassThru
+
+          # Wait for server to be ready
+          Start-Sleep -Seconds 5
         shell: powershell
 
-
-      - name: Wait for PostgreSQL
-        run: Start-Sleep -Seconds 5
-        shell: powershell
-
-      - name: Test connection to PostgreSQL
-        run: psql -U postgres -c "SELECT version();"
+      - name: Test connection
+        run: |
+          "SELECT version();" | "C:\Program Files\PostgreSQL\14\bin\psql.exe" -U postgres -h localhost
         env:
-          PGPASSWORD: 'P@ssw0rd!'
-        shell: bash
+          PGPASSWORD: P@ssw0rd!
+        shell: powershell
