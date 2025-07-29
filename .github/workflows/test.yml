@@ -10,24 +10,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up PostgreSQL manually
+      - name: Set up and start PostgreSQL manually
         run: |
           $pgsql = "C:\Program Files\PostgreSQL\14\bin"
           $data = "$env:RUNNER_TEMP\pgdata"
-
-          # Initialize database cluster
-          & "$pgsql\initdb.exe" -D "$data" -U postgres --no-locale --encoding=UTF8 --pwfile=<(echo P@ssw0rd!)
-
+          $pwFile = "$env:RUNNER_TEMP\pgpass.txt"
+      
+          # Write password to file
+          "P@ssw0rd!" | Out-File -FilePath $pwFile -Encoding ascii
+      
+          # Initialize database
+          & "$pgsql\initdb.exe" -D "$data" -U postgres --no-locale --encoding=UTF8 --pwfile="$pwFile"
+      
           # Start PostgreSQL in background
-          Start-Process -FilePath "$pgsql\pg_ctl.exe" -ArgumentList "start -D `"$data`" -l logfile" -NoNewWindow -PassThru
-
-          # Wait for server to be ready
+          & "$pgsql\pg_ctl.exe" start -D "$data" -l "$env:RUNNER_TEMP\pg_logfile.txt"
+      
+          # Wait for startup
           Start-Sleep -Seconds 5
         shell: powershell
 
-      - name: Test connection
+
+      - name: Test PostgreSQL connection
         run: |
-          "SELECT version();" | "C:\Program Files\PostgreSQL\14\bin\psql.exe" -U postgres -h localhost
+          & "C:\Program Files\PostgreSQL\14\bin\psql.exe" -U postgres -h localhost -c "SELECT version();"
         env:
           PGPASSWORD: P@ssw0rd!
         shell: powershell
+
