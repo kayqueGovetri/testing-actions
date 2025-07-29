@@ -17,26 +17,13 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Encontrar mongosh.exe em Program Files
+      - name: Testar mongosh com caminho encontrado
         shell: pwsh
         run: |
-          $pathsToCheck = @(
-            "C:\Program Files\MongoDB",
-            "C:\Program Files (x86)\MongoDB"
-          )
-      
-          $mongoshPath = $null
-          foreach ($path in $pathsToCheck) {
-            if (Test-Path $path) {
-              $mongoshPath = Get-ChildItem -Path $path -Recurse -Filter "mongosh.exe" -ErrorAction SilentlyContinue -File | Select-Object -First 1 -ExpandProperty FullName
-              if ($mongoshPath) { break }
-            }
-          }
-      
+          $mongoshPath = (cmd /c where mongosh.exe | Out-String).Trim().Split("`n")[0]
           if (-not $mongoshPath) {
-            Write-Error "mongosh.exe não encontrado em nenhum Program Files."
+            Write-Error "mongosh.exe não encontrado no PATH"
             exit 1
           }
-      
           Write-Host "mongosh.exe encontrado em: $mongoshPath"
           & $mongoshPath --eval "db.runCommand({ ping: 1 })"
