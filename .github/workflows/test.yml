@@ -1,4 +1,4 @@
-name: Test MySQL on Windows
+name: Test PostgreSQL on Windows
 
 on:
   push:
@@ -8,24 +8,27 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - run: Get-Service | Where-Object {$_.DisplayName -like "*Postgre*"}
+      - name: Start PostgreSQL service dynamically
+        run: |
+          $pgService = Get-Service | Where-Object { $_.Name -like "postgresql-x64-*" -and $_.Status -eq "Stopped" } | Select-Object -First 1
+          if ($pgService) {
+            Start-Service -Name $pgService.Name
+            Write-Output "Started PostgreSQL service: $($pgService.Name)"
+          } else {
+            Write-Error "No stopped PostgreSQL service found."
+            exit 1
+          }
         shell: powershell
 
-      - name: Start PostgreSQL service
-        run: |
-          net start postgresql-x64-15
-        shell: cmd
-
-      - name: Wait a few seconds for PostgreSQL to start
-        run: |
-          Start-Sleep -Seconds 5
+      - name: Wait for PostgreSQL
+        run: Start-Sleep -Seconds 5
         shell: powershell
 
       - name: Test connection to PostgreSQL
-        run: |
-          psql -U postgres -c "SELECT version();"
+        run: psql -U postgres -c "SELECT version();"
         env:
           PGPASSWORD: 'P@ssw0rd!'
         shell: bash
