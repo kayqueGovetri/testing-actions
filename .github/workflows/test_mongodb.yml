@@ -17,6 +17,7 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: List MongoDB bin folder
-        run: Get-ChildItem "C:\Program Files\MongoDB\Server\7.0\bin" | Select-Object Name
-        shell: powershell
+      - name: Testa se o MongoDB está respondendo
+        shell: pwsh
+        run: |
+          mongosh --eval "db.runCommand({ ping: 1 })"
