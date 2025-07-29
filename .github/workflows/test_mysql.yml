@@ -28,16 +28,17 @@ jobs:
           $content | Out-File -FilePath $configPath -Encoding ascii
         shell: powershell
 
-      - name: Start MySQL server with config file
+      - name: Start MySQL server (foreground)
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
           $configPath = "$env:RUNNER_TEMP\my.ini"
       
-          # Start mysqld with config file
-          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--defaults-file=$configPath --datadir=$dataDir --console" -NoNewWindow -PassThru
+          Start-Job -ScriptBlock {
+              & "$using:mysqlBin\mysqld.exe" --defaults-file="$using:configPath" --datadir="$using:dataDir" --console
+          } | Out-Null
       
-          Start-Sleep -Seconds 30
+          Start-Sleep -Seconds 20
         shell: powershell
 
       - name: Check if MySQL is listening on 3306
