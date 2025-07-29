@@ -17,21 +17,23 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Verificar caminho do mongosh.exe
-        shell: pwsh
+      - name: Verificar porta 27017 aberta
+        shell: powershell
         run: |
-          $mongoshPath = (Get-Command mongosh.exe -ErrorAction SilentlyContinue).Source
-          if (-not $mongoshPath) {
-            # Tente caminho fixo conhecido para mongosh do runner:
-            $possiblePath = "C:\Program Files\MongoDB\mongosh\2.5.6\bin\mongosh.exe"
-            if (Test-Path $possiblePath) {
-              $mongoshPath = $possiblePath
-            } else {
-              Write-Error "mongosh.exe não encontrado."
-              exit 1
-            }
-          }
-          Write-Host "mongosh encontrado em: $mongoshPath"
-      
-          # Testa conexão ping
-          & $mongoshPath --eval "db.runCommand({ ping: 1 })"
+          netstat -ano | Select-String "27017"
+
+      - name: Testar conexão com MongoDB usando pymongo (Python)
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Instalar pymongo
+        run: pip install pymongo
+
+      - name: Testar ping no MongoDB
+        run: |
+          python -c "
+          from pymongo import MongoClient
+          client = MongoClient('mongodb://localhost:27017/')
+          print(client.admin.command('ping'))
+          "
