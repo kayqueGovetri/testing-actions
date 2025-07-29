@@ -21,16 +21,17 @@ jobs:
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
-
-          # Start mysqld in background
+      
           Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--datadir=$dataDir --console" -NoNewWindow -PassThru
+          Start-Sleep -Seconds 30
 
-          # Wait a bit for server to start
-          Start-Sleep -Seconds 10
+      - name: Check MySQL port listening
+        run: netstat -an | Select-String ":3306"
         shell: powershell
 
       - name: Test MySQL connection
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
-          & "$mysqlBin\mysql.exe" -u root -h 127.0.0.1 -e "SELECT VERSION();"
+          & "$mysqlBin\mysql.exe" -u root -h 127.0.0.1 --port=3306 -e "SELECT VERSION();"
         shell: powershell
+
