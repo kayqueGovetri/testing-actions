@@ -33,13 +33,10 @@ jobs:
           $configPath = "$env:RUNNER_TEMP\my.ini"
           $logFile = "$env:RUNNER_TEMP\mysql.log"
       
-          # Inicia mysqld em background como job
-          $job = Start-Job -ScriptBlock {
-            & "$using:mysqlBin\mysqld.exe" `
-              --defaults-file="$using:configPath" `
-              --datadir="$using:dataDir" `
-              --console *> "$using:logFile"
-          }
+          # Iniciar mysqld e não esperar ele fechar (mantém rodando)
+          $process = Start-Process -FilePath "$mysqlBin\mysqld.exe" `
+            -ArgumentList "--defaults-file=$configPath --datadir=$dataDir --console" `
+            -NoNewWindow -PassThru
       
           # Espera um pouco
           Start-Sleep -Seconds 15
@@ -50,7 +47,6 @@ jobs:
           if (-not $mysqlListening) {
             Write-Host "❌ MySQL não está escutando na porta 3306. Exibindo log:"
             Get-Content $logFile -Tail 100
-            Stop-Job $job.Id
             Exit 1
           }
       
