@@ -1,0 +1,33 @@
+name: Run MongoDB manually on Windows
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test-postgres:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create data directory for MongoDB
+        run: mkdir $env:RUNNER_TEMP\data\db
+        shell: powershell
+
+      - name: Start MongoDB server
+        run: |
+          $mongoBin = "C:\Program Files\MongoDB\Server\6.0\bin"
+          $dataDir = "$env:RUNNER_TEMP\data\db"
+
+          # Start mongod as background process
+          Start-Process -FilePath "$mongoBin\mongod.exe" -ArgumentList "--dbpath=$dataDir --bind_ip 127.0.0.1" -NoNewWindow -PassThru
+
+          Start-Sleep -Seconds 10
+          Write-Output "MongoDB should be running now."
+        shell: powershell
+
+      - name: Test MongoDB connection
+        run: |
+          $mongoBin = "C:\Program Files\MongoDB\Server\6.0\bin"
+          & "$mongoBin\mongo.exe" --eval "db.runCommand({ ping: 1 })"
+        shell: powershell
