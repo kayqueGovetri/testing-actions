@@ -17,17 +17,18 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Testar o MongoDB
+      - name: Testar o MongoDB (rápido)
         shell: pwsh
         run: |
-          $mongoshPath = Get-ChildItem -Path "C:\" -Recurse -Filter "mongosh.exe" -ErrorAction SilentlyContinue -Force -File |
-            Where-Object { $_.FullName -like "*mongosh*" } |
+          $basePath = "C:\Program Files\MongoDB"
+          $mongoshPath = Get-ChildItem -Path $basePath -Recurse -Filter "mongosh.exe" -ErrorAction SilentlyContinue -File |
             Select-Object -ExpandProperty FullName -First 1
       
           if (-not $mongoshPath) {
-            Write-Error "mongosh.exe não encontrado."
+            Write-Error "mongosh.exe não encontrado em $basePath."
             exit 1
           }
       
           Write-Host "Executando mongosh em: $mongoshPath"
           & $mongoshPath --eval "db.runCommand({ ping: 1 })"
+
