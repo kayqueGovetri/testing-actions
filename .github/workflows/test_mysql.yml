@@ -5,11 +5,32 @@ on:
 jobs:
   test-mysql:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check MySQL installation
-        run: Get-ChildItem "C:\Program Files\MySQL" -Recurse -Filter "mysqld.exe"
+      - name: Initialize MySQL data directory
+        run: |
+          $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+          $dataDir = "$env:RUNNER_TEMP\mysqldata"
+
+          # Initialize data directory (insecure, no password set here)
+          & "$mysqlBin\mysqld.exe" --initialize-insecure --datadir="$dataDir" --console
         shell: powershell
 
+      - name: Start MySQL server manually
+        run: |
+          $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+          $dataDir = "$env:RUNNER_TEMP\mysqldata"
+
+          # Start mysqld in background
+          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--datadir=$dataDir --console" -NoNewWindow -PassThru
+
+          # Wait a bit for server to start
+          Start-Sleep -Seconds 10
+        shell: powershell
+
+      - name: Test MySQL connection
+        run: |
+          $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
+          & "$mysqlBin\mysql.exe" -u root -h 127.0.0.1 -e "SELECT VERSION();"
+        shell: powershell
