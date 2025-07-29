@@ -17,12 +17,12 @@ jobs:
           & "$mysqlBin\mysqld.exe" --initialize-insecure --datadir="$dataDir" --console
         shell: powershell
 
-      - name: Start MySQL server manually
+      - name: Start MySQL server manually with explicit bind-address
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
       
-          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--datadir=$dataDir --console" -NoNewWindow -PassThru
+          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--datadir=$dataDir --port=3306 --bind-address=127.0.0.1 --console" -NoNewWindow -PassThru
           Start-Sleep -Seconds 30
 
       - name: Check MySQL port listening
@@ -34,4 +34,5 @@ jobs:
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           & "$mysqlBin\mysql.exe" -u root -h 127.0.0.1 --port=3306 -e "SELECT VERSION();"
         shell: powershell
+
 
