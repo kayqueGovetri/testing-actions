@@ -33,12 +33,20 @@ jobs:
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
           $configPath = "$env:RUNNER_TEMP\my.ini"
-      
-          Start-Job -ScriptBlock {
-              & "$using:mysqlBin\mysqld.exe" --defaults-file="$using:configPath" --datadir="$using:dataDir" --console
-          } | Out-Null
-      
-          Start-Sleep -Seconds 20
+          
+          # Start mysqld as background process (non-service)
+          $process = Start-Process -FilePath "$mysqlBin\mysqld.exe" `
+              -ArgumentList "--defaults-file=$configPath --datadir=$dataDir --console" `
+              -NoNewWindow -PassThru
+          
+          Write-Output "MySQL PID: $($process.Id)"
+          
+          # Espera o serviço subir
+          Start-Sleep -Seconds 30
+          
+          # Checa se está ouvindo na porta 3306
+          netstat -ano | Select-String "3306"
+
         shell: powershell
 
       - name: Check if MySQL is listening on 3306
