@@ -41,7 +41,8 @@ jobs:
         shell: powershell
 
       - name: Check if MySQL is listening on 3306
-        run: netstat -an | Select-String ":3306"
+        run: |
+          netstat -ano | Select-String "3306"
         shell: powershell
 
       - name: Test MySQL connection
