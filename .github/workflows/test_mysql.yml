@@ -26,24 +26,35 @@ jobs:
           $content | Out-File -FilePath $configPath -Encoding ascii
         shell: powershell
 
-      - name: Start MySQL server in background
+      - name: Start MySQL server (background job)
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
           $configPath = "$env:RUNNER_TEMP\my.ini"
           $logFile = "$env:RUNNER_TEMP\mysql.log"
-
-          # Inicia o mysqld como um job em background
-          Start-Job -ScriptBlock {
-            & "$using:mysqlBin\mysqld.exe" --defaults-file="$using:configPath" --datadir="$using:dataDir" --console *> "$using:logFile"
+      
+          # Inicia mysqld em background como job
+          $job = Start-Job -ScriptBlock {
+            & "$using:mysqlBin\mysqld.exe" `
+              --defaults-file="$using:configPath" `
+              --datadir="$using:dataDir" `
+              --console *> "$using:logFile"
           }
-
-          Start-Sleep -Seconds 30
-        shell: powershell
-
-      - name: Check if MySQL is listening on port 3306
-        run: |
-          netstat -ano | Select-String "3306"
+      
+          # Espera um pouco
+          Start-Sleep -Seconds 15
+      
+          # Verifica se a porta 3306 está ouvindo
+          $mysqlListening = netstat -ano | Select-String "LISTENING" | Select-String "3306"
+      
+          if (-not $mysqlListening) {
+            Write-Host "❌ MySQL não está escutando na porta 3306. Exibindo log:"
+            Get-Content $logFile -Tail 100
+            Stop-Job $job.Id
+            Exit 1
+          }
+      
+          Write-Host "✅ MySQL está ouvindo na porta 3306."
         shell: powershell
 
       - name: Test MySQL connection
@@ -51,3 +62,4 @@ jobs:
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           & "$mysqlBin\mysql.exe" -u root --port=3306 -e "SELECT VERSION();"
         shell: powershell
+
