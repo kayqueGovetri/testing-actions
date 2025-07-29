@@ -17,15 +17,30 @@ jobs:
           & "$mysqlBin\mysqld.exe" --initialize-insecure --datadir="$dataDir" --console
         shell: powershell
 
-      - name: Start MySQL server manually with explicit bind-address
+      - name: Prepare my.ini config file
+        run: |
+          $configPath = "$env:RUNNER_TEMP\my.ini"
+          $content = @"
+          [mysqld]
+          bind-address=127.0.0.1
+          port=3306
+          "@
+          $content | Out-File -FilePath $configPath -Encoding ascii
+        shell: powershell
+
+      - name: Start MySQL server with config file
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
           $dataDir = "$env:RUNNER_TEMP\mysqldata"
+          $configPath = "$env:RUNNER_TEMP\my.ini"
       
-          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--datadir=$dataDir --port=3306 --bind-address=127.0.0.1 --console" -NoNewWindow -PassThru
+          # Start mysqld with config file
+          Start-Process -FilePath "$mysqlBin\mysqld.exe" -ArgumentList "--defaults-file=$configPath --datadir=$dataDir --console" -NoNewWindow -PassThru
+      
           Start-Sleep -Seconds 30
+        shell: powershell
 
-      - name: Check MySQL port listening
+      - name: Check if MySQL is listening on 3306
         run: netstat -an | Select-String ":3306"
         shell: powershell
 
