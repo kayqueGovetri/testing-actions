@@ -57,6 +57,6 @@ jobs:
       - name: Test MySQL connection
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
-          & "$mysqlBin\mysql.exe" -u -h localhost root --port=3306 -e "SELECT VERSION();"
+          & "$mysqlBin\mysql.exe" --protocol=TCP -u root -P 3306 -e "SELECT VERSION();"
         shell: powershell
 
