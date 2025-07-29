@@ -17,7 +17,17 @@ jobs:
           Start-Sleep -Seconds 10
           Get-Service -Name MongoDB
 
-      - name: Testa se o MongoDB está respondendo
+      - name: Testar o MongoDB
         shell: pwsh
         run: |
-          & "C:\Program Files\MongoDB\mongosh\2.5.6\bin\mongosh.exe" --eval "db.runCommand({ ping: 1 })"
+          $mongoshPath = Get-ChildItem -Path "C:\" -Recurse -Filter "mongosh.exe" -ErrorAction SilentlyContinue -Force -File |
+            Where-Object { $_.FullName -like "*mongosh*" } |
+            Select-Object -ExpandProperty FullName -First 1
+      
+          if (-not $mongoshPath) {
+            Write-Error "mongosh.exe não encontrado."
+            exit 1
+          }
+      
+          Write-Host "Executando mongosh em: $mongoshPath"
+          & $mongoshPath --eval "db.runCommand({ ping: 1 })"
