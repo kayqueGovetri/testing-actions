@@ -20,8 +20,9 @@ jobs:
           $configPath = "$env:RUNNER_TEMP\my.ini"
           $content = @"
           [mysqld]
-          bind-address=127.0.0.1
+          # bind-address=127.0.0.1
           port=3306
+          skip-networking=0
           "@
           $content | Out-File -FilePath $configPath -Encoding ascii
         shell: powershell
@@ -56,6 +57,6 @@ jobs:
       - name: Test MySQL connection
         run: |
           $mysqlBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
-          & "$mysqlBin\mysql.exe" -u root --port=3306 -e "SELECT VERSION();"
+          & "$mysqlBin\mysql.exe" -u -h localhost root --port=3306 -e "SELECT VERSION();"
         shell: powershell
 
