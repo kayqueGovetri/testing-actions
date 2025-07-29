@@ -5,33 +5,11 @@ on:
 jobs:
   test-mysql:
     runs-on: windows-latest
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: testdb
-          MYSQL_USER: testuser
-          MYSQL_PASSWORD: testpass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root -prootpass"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for MySQL
-        run: |
-          for ($i=0; $i -lt 10; $i++) {
-            try {
-              & "mysql.exe" -h 127.0.0.1 -u root -prootpass -e "SELECT VERSION();" && exit 0
-            } catch {
-              Start-Sleep -Seconds 2
-            }
-          }
-          throw "MySQL didn't start"
+      - name: Check MySQL installation
+        run: Get-ChildItem "C:\Program Files\MySQL" -Recurse -Filter "mysqld.exe"
         shell: powershell
+
