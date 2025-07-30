@@ -42,7 +42,7 @@ jobs:
 
       - name: Test PostgreSQL connection
         run: |
-          & "C:\Program Files\PostgreSQL\14\bin\psql.exe" -U postgres -h localhost -c "SELECT version();"
+          & "C:\Program Files\PostgreSQL\14\bin\psql.exe" -U postgres -h localhost -p 5433 -c "SELECT version();"
         env:
           PGPASSWORD: P@ssw0rd!
         shell: powershell
