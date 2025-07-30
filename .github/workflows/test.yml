@@ -15,18 +15,28 @@ jobs:
           $pgsql = "C:\Program Files\PostgreSQL\14\bin"
           $data = "$env:RUNNER_TEMP\pgdata"
           $pwFile = "$env:RUNNER_TEMP\pgpass.txt"
-      
-          # Write password to file
+          $logFile = "$env:RUNNER_TEMP\pg_logfile.txt"
+          
+          # Escreve a senha do usuário postgres
           "P@ssw0rd!" | Out-File -FilePath $pwFile -Encoding ascii
-      
-          # Initialize database
+          
+          # Inicializa o banco de dados
           & "$pgsql\initdb.exe" -D "$data" -U postgres --no-locale --encoding=UTF8 --pwfile="$pwFile"
-      
-          # Start PostgreSQL in background
-          & "$pgsql\pg_ctl.exe" start -D "$data" -l "$env:RUNNER_TEMP\pg_logfile.txt"
-      
-          # Wait for startup
+          
+          # Inicia o PostgreSQL na porta 5433
+          & "$pgsql\pg_ctl.exe" start -D "$data" -l "$logFile" -o "--port=5433"
+          
+          # Aguarda inicialização
           Start-Sleep -Seconds 5
+          
+          # Cria usuário 'test' com senha 'test'
+          & "$pgsql\psql.exe" -U postgres -p 5433 -d postgres -c "CREATE USER test WITH PASSWORD 'test';"
+          
+          # Cria banco de dados 'my_db'
+          & "$pgsql\psql.exe" -U postgres -p 5433 -d postgres -c "CREATE DATABASE my_db OWNER test;"
+          
+          # Concede permissões
+          & "$pgsql\psql.exe" -U postgres -p 5433 -d my_db -c "GRANT ALL PRIVILEGES ON DATABASE my_db TO test;"
         shell: powershell
 
 
